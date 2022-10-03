@@ -632,9 +632,9 @@
     fastq "^1.6.0"
 
 "@nutsapi/eslint-config-ts@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@nutsapi/eslint-config-ts/-/eslint-config-ts-1.0.0.tgz#137d776e33463c95197f93a9ff68b6a09235ad85"
-  integrity sha512-uCKkYyX7ieCIJAGdLM25WZLFqTCKB6PjEiBXH7q4LHbl6Sv0CZTEuL990zp/yxMs6KHySeTKYcpnHT4p9vIDaQ==
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@nutsapi/eslint-config-ts/-/eslint-config-ts-1.0.1.tgz#6890b0e5b666004a06a118fc1314e8276ba44c6e"
+  integrity sha512-W/MsyCPyPx0RNNKvQuIXVGO8W2BH8OnuKjhoZqtrmuFloh/yGIrZjOUnj/QoKgNPa5bPH7S/PQyfwTdo8LY12A==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^5.38.1"
     "@typescript-eslint/parser" "^5.38.1"
