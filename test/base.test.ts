@@ -7,6 +7,7 @@ import type { ExternalInterfaceMarto } from './a';
 
 export type POSTRequest = {
   a: string[]
+  f: 200,
   d: number;
   hello: ('world')[],
 }
@@ -62,7 +63,7 @@ const i = (name: string) => parse.find(v => v.name === name)?.value ?? '';
 
 test('parsePostRequest', async () => {
   expect(await parseType(i('POSTRequest'), p)).toBe(
-    'rt.Record({a:rt.Array(rt.String),d:rt.Number,hello:rt.Array(rt.Literal(\'world\'))})',
+    'rt.Record({a:rt.Array(rt.String),f:rt.Literal(200),d:rt.Number,hello:rt.Array(rt.Literal(\'world\'))})',
   );
 });
 

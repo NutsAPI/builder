@@ -1,5 +1,9 @@
 import { leftEval } from '../src/parseType';
 
 it('leftEval', () => {
-  expect(leftEval('a & b | c')).toStrictEqual({ evalable: true, result: '(((a )& b )| c)' });
+  const evaluated = leftEval('a & b | c');
+  expect(evaluated.evalable).toBe(true);
+  if(evaluated.evalable) {
+    expect(evaluated.result.replaceAll(' ', '')).toBe('(((a)&b)|c)');
+  }
 });
