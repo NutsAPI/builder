@@ -24,7 +24,12 @@ export async function parseEndpoint(path: string): Promise<EndpointTypes> {
     throw new ResponseTypeNotFoundError(path);
   }
 
-  const provider: FileProvider = async file => file === '' ? data : (await readFile(join(path, '../', file))).toString();
+  const provider: FileProvider = async file => {
+    if(file === '') return data;
+    return await readFile(join(path, '../', file))
+      .then(v => v.toString())
+      .catch(() => undefined);
+  };
 
   return {
     request: {
