@@ -73,11 +73,16 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   if(type === 'null') return 'rt.Null';
   if(type === 'undefined') return 'rt.Undefined';
   if(type === 'never') return 'rt.Never';
+  if(type === 'true') return 'rt.Literal(true)';
+  if(type === 'false') return 'rt.Literal(false)';
 
   if(isStringLiteral(type)) {
     return `rt.Literal(${type})`;
   }
 
+  if(!isNaN(parseInt(type))) {
+    return `rt.Literal(${type})`;
+  }
 
   if(type.endsWith('[]')) return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
 
