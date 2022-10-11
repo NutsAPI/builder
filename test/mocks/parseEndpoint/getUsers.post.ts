@@ -1,8 +1,10 @@
 import type { Empty, User } from './base';
 
-export interface Request {
+export interface UserRequest {
   _id: string
 }
+
+export type Request = UserRequest;
 
 export interface Response200 {
   user: User;
