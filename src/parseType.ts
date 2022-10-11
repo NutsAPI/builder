@@ -27,11 +27,20 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   
   const refMatch = type.match(/^(.*?)\['(.*?)'\](.*)$/s);
   if(refMatch !== null) {
-    const record = refMatch[1].match(/\{(.*)\}/s)?.[1] ?? (await resolveSymbol(refMatch[1], provider))?.match(/\{(.*)\}/s)?.[1];
-    if(record === null || record === undefined) {
+    const recordSearch = await (async () => {
+      const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
+      if(objectLiteral !== undefined) return { record: objectLiteral, provider };
+      const symbol = await resolveSymbol(refMatch[1], provider);
+      if(symbol === null) return undefined;
+      const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
+      if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
+      return undefined;
+    })();
+
+    if(recordSearch === undefined) {
       throw `Cannot reference ${refMatch[2]} because Record ${refMatch[1]} is Unknown`;
     }
-    const data = splitOutBracket(record, /,|;|\n/)
+    const data = splitOutBracket(recordSearch.record, /,|;|\n/)
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
       .map(v => splitOutBracket(v, ':'))
@@ -42,9 +51,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
       }))
       .find(v => v.key === refMatch[2]);
     if (data === undefined) {
-      throw `Record ${refMatch[1]} = ${record} hasn't property ${refMatch[2]}`;
+      throw `Record ${refMatch[1]} = ${recordSearch.record} hasn't property ${refMatch[2]}`;
     }
-    return parseType(`${data.value}${refMatch[3] ?? ''}`, provider);
+    return parseType(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
   }
 
   const recordMatch = type.match(/^Record<(.*),(.*)>$/s);
@@ -71,6 +80,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
 
 
   if(type.endsWith('[]')) return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
+
+  const symbol = await resolveSymbol(type, provider);
+  if(symbol !== null) return await parseType(symbol.type, symbol.provider);
 
   throw `Unknown Type: ${type}`;
 }
