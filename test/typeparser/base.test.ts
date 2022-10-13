@@ -1,6 +1,6 @@
-import { parseInterface } from '../src/parseInterface';
-import { parseType } from '../src/parseType';
-import type { FileProvider } from '../src/resolveSymbol';
+import { parseInterface } from '@src/parseInterface';
+import { parseType } from '@src/typeparser';
+import type { FileProvider } from '@src/typeparser/resolveSymbol';
 
 const original = `
 import type { ExternalInterfaceMarto } from './a'; 

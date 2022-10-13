@@ -1,4 +1,4 @@
-import { leftEval } from '../src/parseType';
+import { leftEval } from '@src/typeparser';
 
 it('leftEval', () => {
   const evaluated = leftEval('a & b | c');

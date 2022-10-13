@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { parseEndpoint } from '../src/parseEndpoint';
+import { parseEndpoint } from '@src/parseEndpoint';
 
 it('getUsers(mock)', async () => {
   expect(await parseEndpoint(resolve('./test/mocks/parseEndpoint/getUsers.post.ts'))).toStrictEqual({

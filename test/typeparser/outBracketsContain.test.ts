@@ -1,4 +1,4 @@
-import { outBracketContains, countOutBracketContains, splitOutBracket } from '../src/parseType';
+import { outBracketContains, countOutBracketContains, splitOutBracket } from '@src/typeparser';
 
 it('outBracketsContain', () => {
   expect(outBracketContains('aa(c|d)e', '|')).toBe(false);

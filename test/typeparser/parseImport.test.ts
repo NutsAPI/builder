@@ -1,4 +1,4 @@
-import { parseImport } from '../src/resolveSymbol';
+import { parseImport } from '@src/typeparser/resolveSymbol';
 
 const imports = `
 import { a, b } from './a';

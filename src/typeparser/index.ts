@@ -1,4 +1,4 @@
-import { removeBothEndsSpace } from './parseInterface';
+import { removeBothEndsSpace } from '../parseInterface';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 

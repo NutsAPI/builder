@@ -1,4 +1,4 @@
-import { isStringLiteral } from '../src/parseType';
+import { isStringLiteral } from '@src/typeparser';
 
 it('isStringLiteral', () => {
   expect(isStringLiteral('\'aaa\'')).toBe(true);

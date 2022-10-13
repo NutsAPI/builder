@@ -1,4 +1,4 @@
-import { removeBothEndsSpace } from '../src/parseInterface';
+import { removeBothEndsSpace } from '@src/parseInterface';
 
 it('removeBothEndsSpace', () => {
   expect(removeBothEndsSpace('  a')).toBe('a');
