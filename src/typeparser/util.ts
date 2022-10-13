@@ -45,34 +45,62 @@ export function* iterateGroupingStrings(data: string) {
   if(stack.remain()) yield stack.get();
 }
 
-export function* iterateByTopmostSeparator(data: string, separator: string | string[] | RegExp) {
+/**
+ * ex. "abc(st{ri}ng)def" => [a, b, c, '(st{ri}ng)', d, e, f]
+ */
+export function* iterateGroupingTopmost(data: string) {
   const stack = new StringStack();
   let depth = 0;
-
-  for(const char of iterateGroupingStrings(data)) {
+  for (const char of iterateGroupingStrings(data)) {
+    stack.put(char);
     if(Brackets.startSymbols.includes(char)) depth++;
     if(Brackets.endSymbols.includes(char)) depth--;
-    if(
-      depth === 0 &&
-      (
-        (typeof separator === 'string' && char === separator) ||
-        (Array.isArray(separator) && separator.includes(char)) ||
-        (separator instanceof RegExp && separator.test(char))
-      )
-    ) {
-      yield stack.get();
-      continue;
-    }
-    stack.put(char);
+    if(depth === 0) yield stack.get();
   }
-  yield stack.get();
+  if(stack.remain()) yield stack.get();
 }
 
 /**
  * Splits a string using only separators not enclosed in parentheses.
  * ex. splitTopmost("a%(b%c)%d", "%") returns ["a", "(b%c)", "d"]
  */
-export const splitTopmost = 
-  (data: string, separator: string | string[] | RegExp) => [...iterateByTopmostSeparator(data, separator)];
+export function splitTopmost(data: string, separator: string | string[]) {
+  const result: string[] = [];
+  const stack = new StringStack();
+  for(const char of iterateGroupingTopmost(data)) {
+    if (
+      (Array.isArray(separator) ? separator : [separator]).includes(char)
+    ) {
+      result.push(stack.get());
+      continue;
+    }
+    stack.put(char);
+  }
+  result.push(stack.get());
+  return result;
+}
+
+/**
+ * ex. a & b | c => (a&b)|c
+ */
+export function leftEval(data: string): { evalable: true, result: string } | { evalable: false } {
+  const operators = ['|', '&'];
+  if(splitTopmost(data, operators).length <= 2) return { evalable: false };
+  let result = '';
+  const stack = new StringStack();
+  let connector = '';
+  for(const char of iterateGroupingTopmost(data)) {
+    if(operators.includes(char)) {
+      result = result === '' ? stack.get() : `(${result}${connector}${stack.get()})`;
+      connector = char;
+      continue;
+    }
+    stack.put(char);
+  }
+  result = `${result}${connector}${stack.get()}`;
+  return { evalable: true, result };
+}
+
+
 
 export const isStringLiteral = (data: string) => [...iterateGroupingStrings(data)][0] === data;

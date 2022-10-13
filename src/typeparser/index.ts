@@ -1,4 +1,4 @@
-import { isStringLiteral, splitTopmost } from '@src/typeparser/util';
+import { isStringLiteral, leftEval, splitTopmost } from '@src/typeparser/util';
 import { removeBothEndsSpace } from '../parseInterface';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
@@ -13,7 +13,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    */
   if(type.startsWith('{') && type.endsWith('}')) {
     const content = type.slice(1).slice(0, -1);
-    const typed = splitTopmost(content, /,|;|\n/)
+    const typed = splitTopmost(content, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
       .map(v => splitTopmost(v, ':'))
@@ -60,7 +60,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     if(recordSearch === undefined) {
       throw `Cannot reference ${refMatch[2]} because Record ${refMatch[1]} is Unknown`;
     }
-    const data = splitTopmost(recordSearch.record, /,|;|\n/)
+    const data = splitTopmost(recordSearch.record, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
       .map(v => splitTopmost(v, ':'))
@@ -149,31 +149,3 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
 
   throw `Unknown Type: ${type}`;
 }
-
-export function leftEval(t: string): { evalable: true, result: string } | { evalable: false } {
-  const operators = ['|', '&'];
-  if(splitTopmost(t, operators).length <= 2) return { evalable: false };
-  let result = '';
-  let stack = '';
-  let connector = '';
-  let brackets = 0;
-  for(let i = 0; i < t.length; i++) {
-    if(t[i] === '(') {
-      brackets++;
-    }
-    if(t[i] === ')') {
-      brackets--;
-    }
-    if(brackets === 0 && operators.includes(t[i])) {
-      result = `(${result}${connector}${stack})`;
-      connector = t[i];
-      stack = '';
-      continue;
-    }
-    stack = `${stack}${t[i]}`;
-  }
-  result = `(${result}${connector}${stack})`;
-  return { evalable: true, result };
-}
-
-
