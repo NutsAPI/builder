@@ -1,34 +1,38 @@
 import { Brackets } from './brackets';
 
-/**
- * Splits a string using only separators not enclosed in parentheses.
- * ex. splitTopmost("a%(b%c)%d", "%") returns ["a", "(b%c)", "d"]
- */
-export function splitTopmost(t: string, separator: string | string[] | RegExp) {
-  const result: string[] = [];
+function* iterateByChar(data: string) {
+  yield* data;
+}
+
+
+
+export function* iterateByTopmostSeparator(data: string, separator: string | string[] | RegExp) {
   let stack = '';
   let depth = 0;
-  for(let i = 0; i < t.length; i++) {
-    if(Brackets.startSymbols.includes(t[i])) {
-      depth++;
-    }
-    if(Brackets.endSymbols.includes(t[i])) {
-      depth--;
-    }
+
+  const characters = iterateByChar(data);
+  for(const char of characters) {
+    if(Brackets.startSymbols.includes(char)) depth++;
+    if(Brackets.endSymbols.includes(char)) depth--;
     if(depth === 0) {
       if(
-        (typeof separator === 'string' && t[i] === separator) ||
-        (Array.isArray(separator) && separator.includes(t[i])) ||
-        (separator instanceof RegExp && separator.test(t[i]))
+        (typeof separator === 'string' && char === separator) ||
+        (Array.isArray(separator) && separator.includes(char)) ||
+        (separator instanceof RegExp && separator.test(char))
       ){
-        result.push(stack);
+        yield stack;
         stack = '';
         continue;
       }
     }
-    stack += t[i];
+    stack += char;
   }
-  result.push(stack);
-  return result;
+  yield stack;
 }
-  
+
+/**
+ * Splits a string using only separators not enclosed in parentheses.
+ * ex. splitTopmost("a%(b%c)%d", "%") returns ["a", "(b%c)", "d"]
+ */
+export const splitTopmost = 
+  (data: string, separator: string | string[] | RegExp) => [...iterateByTopmostSeparator(data, separator)];
