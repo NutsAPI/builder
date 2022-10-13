@@ -1,3 +1,4 @@
+import { splitTopmost } from '@src/typeparser/util';
 import { removeBothEndsSpace } from '../parseInterface';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
@@ -12,10 +13,10 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    */
   if(type.startsWith('{') && type.endsWith('}')) {
     const content = type.slice(1).slice(0, -1);
-    const typed = splitOutBracket(content, /,|;|\n/)
+    const typed = splitTopmost(content, /,|;|\n/)
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
-      .map(v => splitOutBracket(v, ':'))
+      .map(v => splitTopmost(v, ':'))
       .map(v => v.map(e => removeBothEndsSpace(e)))
       .map(v => ({
         key: v[0],
@@ -59,10 +60,10 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     if(recordSearch === undefined) {
       throw `Cannot reference ${refMatch[2]} because Record ${refMatch[1]} is Unknown`;
     }
-    const data = splitOutBracket(recordSearch.record, /,|;|\n/)
+    const data = splitTopmost(recordSearch.record, /,|;|\n/)
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
-      .map(v => splitOutBracket(v, ':'))
+      .map(v => splitTopmost(v, ':'))
       .map(v => v.map(e => removeBothEndsSpace(e)))
       .map(v => ({
         key: v[0],
@@ -93,8 +94,8 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Processes Operators(Union, Intersect).
    */
-  if(outBracketContains(type, '|')) return `rt.Union(${(await Promise.all(splitOutBracket(type, '|').map(v => parseType(v, provider)))).join(',')})`;
-  if(outBracketContains(type, '&')) return `rt.Intersect(${(await Promise.all(splitOutBracket(type, '&').map(v => parseType(v, provider)))).join(',')})`;
+  if(splitTopmost(type, '|').length > 1) return `rt.Union(${(await Promise.all(splitTopmost(type, '|').map(v => parseType(v, provider)))).join(',')})`;
+  if(splitTopmost(type, '&').length > 1) return `rt.Intersect(${(await Promise.all(splitTopmost(type, '&').map(v => parseType(v, provider)))).join(',')})`;
 
 
   /**
@@ -158,39 +159,9 @@ export function isStringLiteral(type: string): boolean {
   return true;
 }
 
-export function outBracketContains(target: string, lookup: string) {
-  return countOutBracketContains(target, lookup) > 0;
-}
-
-export function countOutBracketContains(target: string, lookup: string) {
-  return splitOutBracket(target, lookup).length - 1;
-}
-
-export function splitOutBracket(t: string, lookup: string | RegExp) {
-  const result: string[] = [];
-  let stack = '';
-  let brackets = 0;
-  for(let i = 0; i < t.length; i++) {
-    if(t[i] === '(' || t[i] === '{') {
-      brackets++;
-    }
-    if(t[i] === ')'|| t[i] === '}') {
-      brackets--;
-    }
-    if(brackets === 0 && (typeof lookup === 'string' ? t[i] === lookup : lookup.test(t[i]))) {
-      result.push(stack);
-      stack = '';
-      continue;
-    }
-    stack = `${stack}${t[i]}`;
-  }
-  result.push(stack);
-  return result;
-}
-
 export function leftEval(t: string): { evalable: true, result: string } | { evalable: false } {
-  const datas = ['|', '&'];
-  if(datas.map(v => countOutBracketContains(t, v)).reduce((a, b) => a + b) <= 1) return { evalable: false };
+  const operators = ['|', '&'];
+  if(splitTopmost(t, operators).length <= 2) return { evalable: false };
   let result = '';
   let stack = '';
   let connector = '';
@@ -202,7 +173,7 @@ export function leftEval(t: string): { evalable: true, result: string } | { eval
     if(t[i] === ')') {
       brackets--;
     }
-    if(brackets === 0 && datas.includes(t[i])) {
+    if(brackets === 0 && operators.includes(t[i])) {
       result = `(${result}${connector}${stack})`;
       connector = t[i];
       stack = '';
