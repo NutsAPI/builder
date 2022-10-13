@@ -74,3 +74,5 @@ export function* iterateByTopmostSeparator(data: string, separator: string | str
  */
 export const splitTopmost = 
   (data: string, separator: string | string[] | RegExp) => [...iterateByTopmostSeparator(data, separator)];
+
+export const isStringLiteral = (data: string) => [...iterateGroupingStrings(data)][0] === data;

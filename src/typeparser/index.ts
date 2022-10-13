@@ -1,4 +1,4 @@
-import { splitTopmost } from '@src/typeparser/util';
+import { isStringLiteral, splitTopmost } from '@src/typeparser/util';
 import { removeBothEndsSpace } from '../parseInterface';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
@@ -148,15 +148,6 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   if(symbol !== null) return await parseType(symbol.type, symbol.provider);
 
   throw `Unknown Type: ${type}`;
-}
-
-export function isStringLiteral(type: string): boolean {
-  const wrappers = ['"', '\''];
-  const first = type.substring(0,1);
-  if(!wrappers.includes(first)) return false;
-  if(!type.endsWith(first)) return false;
-  if(type.slice(1).slice(0, -1).replace(new RegExp(`\\\\\\${first}`), '').includes(first)) return false;
-  return true;
 }
 
 export function leftEval(t: string): { evalable: true, result: string } | { evalable: false } {
