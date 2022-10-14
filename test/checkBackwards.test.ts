@@ -1,4 +1,4 @@
-import { checkBackwards } from '../src/parseInterface';
+import { checkBackwards } from '@src/parseInterface';
 
 it('checkBackwards', () => {
   expect(checkBackwards('abcde', 3, 'cd')).toBe(true);

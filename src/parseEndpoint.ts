@@ -1,9 +1,9 @@
-import type { FileProvider } from './resolveSymbol';
+import type { FileProvider } from './typeparser/resolveSymbol';
 import { readFile } from 'fs/promises';
 import { RequestTypeNotFoundError, ResponseTypeNotFoundError } from './error/invaildEndpoint';
 import type { EndpointTypes } from './interfaces/endpoint';
 import { parseInterface } from './parseInterface';
-import { parseType } from './parseType';
+import { parseType } from './typeparser';
 import { join } from 'path';
 
 export async function parseEndpoint(path: string): Promise<EndpointTypes> {
