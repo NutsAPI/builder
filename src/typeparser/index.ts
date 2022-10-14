@@ -39,7 +39,6 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    */
   const refMatch = type.match(/^(.*?)\['(.*?)'\](.*)$/s);
   if(refMatch !== null) {
-
     /**
      * If it resolve a reference from another file,
      * the Provider needs to be changed because the file it is looking at changes.
@@ -47,19 +46,19 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     const recordSearch: {
       record: string;
       provider: FileProvider;
-  } | undefined = await (async () => {
-    const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
-    if(objectLiteral !== undefined) return { record: objectLiteral, provider };
-    const symbol = await resolveSymbol(refMatch[1], provider);
-    if(symbol === null) return undefined;
-    const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
-    if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
-    return undefined;
-  })();
+    } | undefined = await (async () => {
+      const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
+      if(objectLiteral !== undefined) return { record: objectLiteral, provider };
+      const symbol = await resolveSymbol(refMatch[1], provider);
+      if(symbol === null) return undefined;
+      const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
+      if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
+      return undefined;
+    })();
 
-    if(recordSearch === undefined) {
+    if(recordSearch === undefined) 
       throw `Cannot reference ${refMatch[2]} because Record ${refMatch[1]} is Unknown`;
-    }
+    
     const data = splitTopmost(recordSearch.record, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
@@ -70,9 +69,10 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         value: v[1],
       }))
       .find(v => v.key === refMatch[2]);
-    if (data === undefined) {
+
+    if (data === undefined)
       throw `Record ${refMatch[1]} = ${recordSearch.record} hasn't property ${refMatch[2]}`;
-    }
+
     return parseType(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
   }
 
@@ -94,15 +94,19 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Processes Operators(Union, Intersect).
    */
-  if(splitTopmost(type, '|').length > 1) return `rt.Union(${(await Promise.all(splitTopmost(type, '|').map(v => parseType(v, provider)))).join(',')})`;
-  if(splitTopmost(type, '&').length > 1) return `rt.Intersect(${(await Promise.all(splitTopmost(type, '&').map(v => parseType(v, provider)))).join(',')})`;
+  if(splitTopmost(type, '|').length > 1)
+    return `rt.Union(${(await Promise.all(splitTopmost(type, '|').map(v => parseType(v, provider)))).join(',')})`;
+
+  if(splitTopmost(type, '&').length > 1)
+    return `rt.Intersect(${(await Promise.all(splitTopmost(type, '&').map(v => parseType(v, provider)))).join(',')})`;
 
 
   /**
    * Remove meaningless brackets.
    * ex. (A) => A
    */
-  if(type.startsWith('(') && type.endsWith(')')) return parseType(type.slice(1).slice(0, -1), provider);
+  if(type.startsWith('(') && type.endsWith(')'))
+    return parseType(type.slice(1).slice(0, -1), provider);
 
 
   /**
@@ -121,23 +125,22 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * Processes string literals.
    * ex. "abc" => rt.Literal("abc")
    */
-  if(isStringLiteral(type)) {
+  if(isStringLiteral(type)) 
     return `rt.Literal(${type})`;
-  }
 
   /**
    * Processes number literals.
    * ex. 123 => rt.Literal(123)
    */
-  if(!isNaN(parseInt(type))) {
+  if(!isNaN(parseInt(type))) 
     return `rt.Literal(${type})`;
-  }
 
   /**
    * Processes arrays.
    * ex. A[] => rt.Array(A)
    */
-  if(type.endsWith('[]')) return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
+  if(type.endsWith('[]'))
+    return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
 
 
   /**
@@ -145,7 +148,8 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * If an external file is referenced, the file being looked at changes, so update `provider`.
    */
   const symbol = await resolveSymbol(type, provider);
-  if(symbol !== null) return await parseType(symbol.type, symbol.provider);
+  if(symbol !== null)
+    return await parseType(symbol.type, symbol.provider);
 
   throw `Unknown Type: ${type}`;
 }
