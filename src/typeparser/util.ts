@@ -53,8 +53,8 @@ export function* iterateGroupingTopmost(data: string) {
   let depth = 0;
   for (const char of iterateGroupingStrings(data)) {
     stack.put(char);
-    if(Brackets.startSymbols.includes(char)) depth++;
-    if(Brackets.endSymbols.includes(char)) depth--;
+    if(Brackets.openSymbols.includes(char)) depth++;
+    if(Brackets.closeSymbols.includes(char)) depth--;
     if(depth === 0) yield stack.get();
   }
   if(stack.remain()) yield stack.get();

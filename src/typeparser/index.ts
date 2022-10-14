@@ -1,5 +1,6 @@
 import { isStringLiteral, leftEval, splitTopmost } from '@src/typeparser/util';
 import { removeBothEndsSpace } from '../parseInterface';
+import { Brackets } from './brackets';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
@@ -11,9 +12,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * 
    * ex. { username: string } => rt.Record({ username: rt.String })
    */
-  if(type.startsWith('{') && type.endsWith('}')) {
-    const content = type.slice(1).slice(0, -1);
-    const typed = splitTopmost(content, [',', ';', '\n'])
+  const objectLiteral = Brackets.extract(type, Brackets.objectBracket);
+  if(objectLiteral.match) {
+    const typed = splitTopmost(objectLiteral.content, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
       .map(v => splitTopmost(v, ':'))
@@ -79,8 +80,13 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * ex. Record<A, B> => rt.Record(A, B)
    */
-  const recordMatch = type.match(/^Record<(.*),(.*)>$/s);
-  if(recordMatch !== null) return `rt.Record(${await parseType(recordMatch[1], provider)},${await parseType(recordMatch[2], provider)})`;
+  const recordLiteral = Brackets.extract(type, { open: 'Record<', close: '>' });
+  if(recordLiteral.match) {
+    const args = splitTopmost(recordLiteral.content, ',');
+    if (args.length !== 2)
+      throw '';
+    return `rt.Record(${(await Promise.all(args.map(v => parseType(v, provider)))).join(',')})`;
+  }
 
 
   /**
