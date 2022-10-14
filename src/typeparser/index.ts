@@ -1,11 +1,14 @@
-import { isStringLiteral, leftEval, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
+import { isStringLiteral, leftEval, promiseJoin, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
 import { Brackets } from './brackets';
-import type { FileProvider} from './resolveSymbol';
+import type { FileProvider } from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
 export async function parseType(type: string, provider: FileProvider): Promise<string> {
+
+  const recursive = (nextType: string, nextProvider?: FileProvider) => parseType(nextType, nextProvider ?? provider);
+
   const spaceRemoved = removeBothEndsSpace(type);
-  if(type !== spaceRemoved) return parseType(spaceRemoved, provider);
+  if(type !== spaceRemoved) return recursive(spaceRemoved, provider);
 
   /**
    * Simple object literals
@@ -23,13 +26,12 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         key: v[0],
         value: v[1],
       }))
-      
       .map(v => ({
         key: v.key,
-        value: parseType(v.value, provider),
+        value: recursive(v.value),
       }))
       .map(async v => `${v.key}:${await v.value}`);
-    return `rt.Record({${(await Promise.all(typed)).join(',')}})`;
+    return `rt.Record({${await promiseJoin(typed, ',')})`;
   }
   
   /**
@@ -74,7 +76,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     if (data === undefined)
       throw `Record ${refMatch[1]} = ${recordSearch.record} hasn't property ${refMatch[2]}`;
 
-    return parseType(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
+    return recursive(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
   }
 
   /**
@@ -85,7 +87,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     const args = splitTopmost(recordLiteral.content, ',');
     if (args.length !== 2)
       throw '';
-    return `rt.Record(${(await Promise.all(args.map(v => parseType(v, provider)))).join(',')})`;
+    return `rt.Record(${await promiseJoin(args.map(t => recursive(t)), ',')})`;
   }
 
 
@@ -94,17 +96,17 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * ex. A & B | C => (((A) & B) | C)
    */
   const evalResult = leftEval(type);
-  if(evalResult.evalable) return parseType(evalResult.result, provider);
+  if(evalResult.evalable) return recursive(evalResult.result);
 
 
   /**
    * Processes Operators(Union, Intersect).
    */
   if(splitTopmost(type, '|').length > 1)
-    return `rt.Union(${(await Promise.all(splitTopmost(type, '|').map(v => parseType(v, provider)))).join(',')})`;
+    return `rt.Union(${await promiseJoin(splitTopmost(type, '|').map(t => recursive(t)), ',')})`;
 
   if(splitTopmost(type, '&').length > 1)
-    return `rt.Intersect(${(await Promise.all(splitTopmost(type, '&').map(v => parseType(v, provider)))).join(',')})`;
+    return `rt.Intersect(${await promiseJoin(splitTopmost(type, '&').map(t => recursive(t)), ',')})`;
 
 
   /**
@@ -112,8 +114,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * ex. (A) => A
    */
   const bracketedType =  Brackets.extract(type, Brackets.parenthesisBracket);
-  if(bracketedType.match)
-    return parseType(bracketedType.content, provider);
+  if(bracketedType.match) return recursive(bracketedType.content);
 
 
   /**
@@ -132,23 +133,20 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * Processes string literals.
    * ex. "abc" => rt.Literal("abc")
    */
-  if(isStringLiteral(type)) 
-    return `rt.Literal(${type})`;
+  if(isStringLiteral(type)) return `rt.Literal(${type})`;
 
   /**
    * Processes number literals.
    * ex. 123 => rt.Literal(123)
    */
-  if(!isNaN(parseInt(type))) 
-    return `rt.Literal(${type})`;
+  if(!isNaN(parseInt(type))) return `rt.Literal(${type})`;
 
   /**
    * Processes arrays.
    * ex. A[] => rt.Array(A)
    */
   const arrayLiteral = Brackets.extract(type, { open: '', close: '[]' });
-  if(arrayLiteral.match)
-    return `rt.Array(${await parseType(arrayLiteral.content, provider)})`;  
+  if(arrayLiteral.match) return `rt.Array(${await recursive(arrayLiteral.content)})`;  
 
 
   /**
@@ -157,7 +155,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    */
   const symbol = await resolveSymbol(type, provider);
   if(symbol !== null)
-    return await parseType(symbol.type, symbol.provider);
+    return await recursive(symbol.type, symbol.provider);
 
   throw `Unknown Type: ${type}`;
 }

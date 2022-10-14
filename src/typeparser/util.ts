@@ -21,6 +21,10 @@ export function removeBothEndsSpace(s: string) {
   return s.replace(/^(\s*)(.*?)(\s*)$/s, '$2');
 }
 
+export async function promiseJoin(array: Promise<string>[], separator: string) {
+  return (await Promise.all(array)).join(separator);
+}
+
 
 export function* iterateByChar(data: string) {
   yield* data;
