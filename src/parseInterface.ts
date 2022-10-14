@@ -1,3 +1,5 @@
+import { removeBothEndsSpace } from './typeparser/util';
+
 export function parseInterface(s: string): { name: string, value: string }[] {  
   let status: { at: 'none' } | { 
     at: 'declaringType' | 'declaringInterface',
@@ -85,8 +87,4 @@ export function checkBackwards(target: string, index: number, looking: string) {
 
 export function getBackwards(target: string, index: number, length: number) {
   return target.substring(index - length + 1, index + 1);
-}
-
-export function removeBothEndsSpace(s: string) {
-  return s.replace(/^(\s*)(.*?)(\s*)$/s, '$2');
 }

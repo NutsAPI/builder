@@ -1,11 +1,11 @@
-import { isStringLiteral, leftEval, splitTopmost } from '@src/typeparser/util';
-import { removeBothEndsSpace } from '../parseInterface';
+import { isStringLiteral, leftEval, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
 import { Brackets } from './brackets';
 import type { FileProvider} from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
 export async function parseType(type: string, provider: FileProvider): Promise<string> {
-  if(type !== removeBothEndsSpace(type)) return parseType(removeBothEndsSpace(type), provider);
+  const spaceRemoved = removeBothEndsSpace(type);
+  if(type !== spaceRemoved) return parseType(spaceRemoved, provider);
 
   /**
    * Simple object literals

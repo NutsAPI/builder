@@ -17,6 +17,11 @@ class StringStack {
   }
 }
 
+export function removeBothEndsSpace(s: string) {
+  return s.replace(/^(\s*)(.*?)(\s*)$/s, '$2');
+}
+
+
 export function* iterateByChar(data: string) {
   yield* data;
 }
