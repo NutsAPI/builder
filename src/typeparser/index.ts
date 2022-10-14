@@ -111,8 +111,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * Remove meaningless brackets.
    * ex. (A) => A
    */
-  if(type.startsWith('(') && type.endsWith(')'))
-    return parseType(type.slice(1).slice(0, -1), provider);
+  const bracketedType =  Brackets.extract(type, Brackets.parenthesisBracket);
+  if(bracketedType.match)
+    return parseType(bracketedType.content, provider);
 
 
   /**
@@ -145,8 +146,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * Processes arrays.
    * ex. A[] => rt.Array(A)
    */
-  if(type.endsWith('[]'))
-    return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
+  const arrayLiteral = Brackets.extract(type, { open: '', close: '[]' });
+  if(arrayLiteral.match)
+    return `rt.Array(${await parseType(arrayLiteral.content, provider)})`;  
 
 
   /**
