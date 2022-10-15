@@ -63,67 +63,67 @@ const i = (name: string) => parse.find(v => v.name === name)?.value ?? '';
 
 test('parsePostRequest', async () => {
   expect(await parseType(i('POSTRequest'), p)).toBe(
-    'rt.Record({a:rt.Array(rt.String),f:rt.Literal(200),d:rt.Number,hello:rt.Array(rt.Literal(\'world\'))})',
+    'zod.object({a:zod.string().array(),f:zod.literal(200),d:zod.number(),hello:zod.literal(\'world\').array()})',
   );
 });
 
 test('parsePostResponse', async () => {
   expect(await parseType(i('POSTResponse'), p)).toBe(
-    'rt.Record({b:rt.String,style:rt.Union(rt.Literal(\'js\'),rt.Literal(\'ts\'))})',
+    'zod.object({b:zod.string(),style:zod.literal(\'js\').or(zod.literal(\'ts\'))})',
   );
 });
 
 test('parseUnionOuter', async () => {
   expect(await parseType(i('UnionOuter'), p)).toBe(
-    'rt.Record({out:rt.Array(rt.Union(rt.String,rt.Number)),in:rt.Union(rt.Array(rt.String),rt.Array(rt.Number)),split:rt.Union(rt.String,rt.Array(rt.Number))})',
+    'zod.object({out:zod.string().or(zod.number()).array(),in:zod.string().array().or(zod.number().array()),split:zod.string().or(zod.number().array())})',
   );
 });
 
 test('parseCross', async () => {
   expect(await parseType(i('Cross'), p)).toBe(
-    'rt.Intersect(rt.Union(rt.String,rt.Number),rt.Boolean)',
+    'zod.string().or(zod.number()).and(zod.boolean())',
   );
 });
 
 test('parseCross2', async () => {
   expect(await parseType(i('Cross2'), p)).toBe(
-    'rt.Union(rt.Intersect(rt.String,rt.Number),rt.Boolean)',
+    'zod.string().and(zod.number()).or(zod.boolean())',
   );
 });
 
 test('parseCross3', async () => {
   expect(await parseType(i('Cross3'), p)).toBe(
-    'rt.Intersect(rt.Intersect(rt.String,rt.Union(rt.Number,rt.Boolean)),rt.Null)',
+    'zod.string().and(zod.number().or(zod.boolean())).and(zod.null())',
   );
 });
 
 test('parseMarto', async () => {
   expect(await parseType(i('Marto'), p)).toBe(
-    'rt.Record({a:rt.Record({b:rt.String})})',
+    'zod.object({a:zod.object({b:zod.string()})})',
   );
 });
 
 test('parseRefTest', async () => {
   expect(await parseType(i('RefTest'), p)).toBe(
-    'rt.Record({a:rt.Boolean})',
+    'zod.object({a:zod.boolean()})',
   );
 });
 
 test('parseRecordTest', async () => {
   expect(await parseType(i('RecordTest'), p)).toBe(
-    'rt.Record(rt.String,rt.Never)',
+    'zod.record(zod.string(),zod.never())',
   );
 });
 
 test('parseResolveTest1', async () => {
   expect(await parseType(i('ResolveTest1'), p)).toBe(
-    'rt.String',
+    'zod.string()',
   );
 });
 
 
 test('parseResolveTest2', async () => {
   expect(await parseType(i('ResolveTest2'), p)).toBe(
-    'rt.String',
+    'zod.string()',
   );
 });

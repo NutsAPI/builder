@@ -13,7 +13,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Simple object literals
    * 
-   * ex. { username: string } => rt.Record({ username: rt.String })
+   * ex. { username: string } => zod.object({ username: zod.string() })
    */
   const objectLiteral = Brackets.extract(type, Brackets.objectBracket);
   if(objectLiteral.match) {
@@ -31,7 +31,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         value: recursive(v.value),
       }))
       .map(async v => `${v.key}:${await v.value}`);
-    return `rt.Record({${await promiseJoin(typed, ',')}})`;
+    return `zod.object({${await promiseJoin(typed, ',')}})`;
   }
   
   /**
@@ -80,14 +80,14 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   }
 
   /**
-   * ex. Record<A, B> => rt.Record(A, B)
+   * ex. Record<A, B> => zod.record(A, B)
    */
   const recordLiteral = Brackets.extract(type, { open: 'Record<', close: '>' });
   if(recordLiteral.match) {
     const args = splitTopmost(recordLiteral.content, ',');
     if (args.length !== 2)
       throw '';
-    return `rt.Record(${await promiseJoin(args.map(t => recursive(t)), ',')})`;
+    return `zod.record(${await promiseJoin(args.map(t => recursive(t)), ',')})`;
   }
 
 
@@ -102,11 +102,13 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Processes Operators(Union, Intersect).
    */
-  if(splitTopmost(type, '|').length > 1)
-    return `rt.Union(${await promiseJoin(splitTopmost(type, '|').map(t => recursive(t)), ',')})`;
+  const union = splitTopmost(type, '|');
+  if(union.length === 2)
+    return `${await recursive(union[0])}.or(${await recursive(union[1])})`;
 
-  if(splitTopmost(type, '&').length > 1)
-    return `rt.Intersect(${await promiseJoin(splitTopmost(type, '&').map(t => recursive(t)), ',')})`;
+  const intersect = splitTopmost(type, '&');
+  if(intersect.length === 2)
+    return `${await recursive(intersect[0])}.and(${await recursive(intersect[1])})`;
 
 
   /**
@@ -120,33 +122,33 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Processes Basic Types.
    */
-  if(type === 'string') return 'rt.String';
-  if(type === 'number') return 'rt.Number';
-  if(type === 'boolean') return 'rt.Boolean';
-  if(type === 'null') return 'rt.Null';
-  if(type === 'undefined') return 'rt.Undefined';
-  if(type === 'never') return 'rt.Never';
-  if(type === 'true') return 'rt.Literal(true)';
-  if(type === 'false') return 'rt.Literal(false)';
+  if(type === 'string') return 'zod.string()';
+  if(type === 'number') return 'zod.number()';
+  if(type === 'boolean') return 'zod.boolean()';
+  if(type === 'null') return 'zod.null()';
+  if(type === 'undefined') return 'zod.undefined()';
+  if(type === 'never') return 'zod.never()';
+  if(type === 'true') return 'zod.literal(true)';
+  if(type === 'false') return 'zod.literal(false)';
 
   /**
    * Processes string literals.
-   * ex. "abc" => rt.Literal("abc")
+   * ex. "abc" => zod.literal("abc")
    */
-  if(isStringLiteral(type)) return `rt.Literal(${type})`;
+  if(isStringLiteral(type)) return `zod.literal(${type})`;
 
   /**
    * Processes number literals.
-   * ex. 123 => rt.Literal(123)
+   * ex. 123 => zod.literal(123)
    */
-  if(!isNaN(parseInt(type))) return `rt.Literal(${type})`;
+  if(!isNaN(parseInt(type))) return `zod.literal(${type})`;
 
   /**
    * Processes arrays.
-   * ex. A[] => rt.Array(A)
+   * ex. A[] => A.array()
    */
   const arrayLiteral = Brackets.extract(type, { open: '', close: '[]' });
-  if(arrayLiteral.match) return `rt.Array(${await recursive(arrayLiteral.content)})`;  
+  if(arrayLiteral.match) return `${await recursive(arrayLiteral.content)}.array()`;  
 
 
   /**
