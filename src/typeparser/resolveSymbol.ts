@@ -1,6 +1,6 @@
 import { join } from 'path';
-import { parseInterface, removeBothEndsSpace } from '../parseInterface';
-import { isStringLiteral } from './util';
+import { parseInterface } from '../parseInterface';
+import { isStringLiteral, removeBothEndsSpace } from './util';
 
 export type FileProvider = (filePath: string) => Promise<string | undefined>;
 

@@ -1,19 +1,23 @@
-import { isStringLiteral, leftEval, splitTopmost } from '@src/typeparser/util';
-import { removeBothEndsSpace } from '../parseInterface';
-import type { FileProvider} from './resolveSymbol';
+import { isStringLiteral, leftEval, promiseJoin, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
+import { Brackets } from './brackets';
+import type { FileProvider } from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
 export async function parseType(type: string, provider: FileProvider): Promise<string> {
-  if(type !== removeBothEndsSpace(type)) return parseType(removeBothEndsSpace(type), provider);
+
+  const recursive = (nextType: string, nextProvider?: FileProvider) => parseType(nextType, nextProvider ?? provider);
+
+  const spaceRemoved = removeBothEndsSpace(type);
+  if(type !== spaceRemoved) return recursive(spaceRemoved, provider);
 
   /**
    * Simple object literals
    * 
    * ex. { username: string } => rt.Record({ username: rt.String })
    */
-  if(type.startsWith('{') && type.endsWith('}')) {
-    const content = type.slice(1).slice(0, -1);
-    const typed = splitTopmost(content, [',', ';', '\n'])
+  const objectLiteral = Brackets.extract(type, Brackets.objectBracket);
+  if(objectLiteral.match) {
+    const typed = splitTopmost(objectLiteral.content, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
       .map(v => splitTopmost(v, ':'))
@@ -22,13 +26,12 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         key: v[0],
         value: v[1],
       }))
-      
       .map(v => ({
         key: v.key,
-        value: parseType(v.value, provider),
+        value: recursive(v.value),
       }))
       .map(async v => `${v.key}:${await v.value}`);
-    return `rt.Record({${(await Promise.all(typed)).join(',')}})`;
+    return `rt.Record({${await promiseJoin(typed, ',')}})`;
   }
   
   /**
@@ -39,7 +42,6 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    */
   const refMatch = type.match(/^(.*?)\['(.*?)'\](.*)$/s);
   if(refMatch !== null) {
-
     /**
      * If it resolve a reference from another file,
      * the Provider needs to be changed because the file it is looking at changes.
@@ -47,19 +49,19 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     const recordSearch: {
       record: string;
       provider: FileProvider;
-  } | undefined = await (async () => {
-    const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
-    if(objectLiteral !== undefined) return { record: objectLiteral, provider };
-    const symbol = await resolveSymbol(refMatch[1], provider);
-    if(symbol === null) return undefined;
-    const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
-    if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
-    return undefined;
-  })();
+    } | undefined = await (async () => {
+      const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
+      if(objectLiteral !== undefined) return { record: objectLiteral, provider };
+      const symbol = await resolveSymbol(refMatch[1], provider);
+      if(symbol === null) return undefined;
+      const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
+      if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
+      return undefined;
+    })();
 
-    if(recordSearch === undefined) {
+    if(recordSearch === undefined) 
       throw `Cannot reference ${refMatch[2]} because Record ${refMatch[1]} is Unknown`;
-    }
+    
     const data = splitTopmost(recordSearch.record, [',', ';', '\n'])
       .map(v => removeBothEndsSpace(v))
       .filter(v => v !== '')
@@ -70,17 +72,23 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         value: v[1],
       }))
       .find(v => v.key === refMatch[2]);
-    if (data === undefined) {
+
+    if (data === undefined)
       throw `Record ${refMatch[1]} = ${recordSearch.record} hasn't property ${refMatch[2]}`;
-    }
-    return parseType(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
+
+    return recursive(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
   }
 
   /**
    * ex. Record<A, B> => rt.Record(A, B)
    */
-  const recordMatch = type.match(/^Record<(.*),(.*)>$/s);
-  if(recordMatch !== null) return `rt.Record(${await parseType(recordMatch[1], provider)},${await parseType(recordMatch[2], provider)})`;
+  const recordLiteral = Brackets.extract(type, { open: 'Record<', close: '>' });
+  if(recordLiteral.match) {
+    const args = splitTopmost(recordLiteral.content, ',');
+    if (args.length !== 2)
+      throw '';
+    return `rt.Record(${await promiseJoin(args.map(t => recursive(t)), ',')})`;
+  }
 
 
   /**
@@ -88,21 +96,25 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * ex. A & B | C => (((A) & B) | C)
    */
   const evalResult = leftEval(type);
-  if(evalResult.evalable) return parseType(evalResult.result, provider);
+  if(evalResult.evalable) return recursive(evalResult.result);
 
 
   /**
    * Processes Operators(Union, Intersect).
    */
-  if(splitTopmost(type, '|').length > 1) return `rt.Union(${(await Promise.all(splitTopmost(type, '|').map(v => parseType(v, provider)))).join(',')})`;
-  if(splitTopmost(type, '&').length > 1) return `rt.Intersect(${(await Promise.all(splitTopmost(type, '&').map(v => parseType(v, provider)))).join(',')})`;
+  if(splitTopmost(type, '|').length > 1)
+    return `rt.Union(${await promiseJoin(splitTopmost(type, '|').map(t => recursive(t)), ',')})`;
+
+  if(splitTopmost(type, '&').length > 1)
+    return `rt.Intersect(${await promiseJoin(splitTopmost(type, '&').map(t => recursive(t)), ',')})`;
 
 
   /**
    * Remove meaningless brackets.
    * ex. (A) => A
    */
-  if(type.startsWith('(') && type.endsWith(')')) return parseType(type.slice(1).slice(0, -1), provider);
+  const bracketedType =  Brackets.extract(type, Brackets.parenthesisBracket);
+  if(bracketedType.match) return recursive(bracketedType.content);
 
 
   /**
@@ -121,23 +133,20 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * Processes string literals.
    * ex. "abc" => rt.Literal("abc")
    */
-  if(isStringLiteral(type)) {
-    return `rt.Literal(${type})`;
-  }
+  if(isStringLiteral(type)) return `rt.Literal(${type})`;
 
   /**
    * Processes number literals.
    * ex. 123 => rt.Literal(123)
    */
-  if(!isNaN(parseInt(type))) {
-    return `rt.Literal(${type})`;
-  }
+  if(!isNaN(parseInt(type))) return `rt.Literal(${type})`;
 
   /**
    * Processes arrays.
    * ex. A[] => rt.Array(A)
    */
-  if(type.endsWith('[]')) return `rt.Array(${await parseType(type.slice(0, -2), provider)})`;  
+  const arrayLiteral = Brackets.extract(type, { open: '', close: '[]' });
+  if(arrayLiteral.match) return `rt.Array(${await recursive(arrayLiteral.content)})`;  
 
 
   /**
@@ -145,7 +154,8 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * If an external file is referenced, the file being looked at changes, so update `provider`.
    */
   const symbol = await resolveSymbol(type, provider);
-  if(symbol !== null) return await parseType(symbol.type, symbol.provider);
+  if(symbol !== null)
+    return await recursive(symbol.type, symbol.provider);
 
   throw `Unknown Type: ${type}`;
 }

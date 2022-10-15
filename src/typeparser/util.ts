@@ -17,6 +17,15 @@ class StringStack {
   }
 }
 
+export function removeBothEndsSpace(s: string) {
+  return s.replace(/^(\s*)(.*?)(\s*)$/s, '$2');
+}
+
+export async function promiseJoin(array: Promise<string>[], separator: string) {
+  return (await Promise.all(array)).join(separator);
+}
+
+
 export function* iterateByChar(data: string) {
   yield* data;
 }
@@ -53,8 +62,8 @@ export function* iterateGroupingTopmost(data: string) {
   let depth = 0;
   for (const char of iterateGroupingStrings(data)) {
     stack.put(char);
-    if(Brackets.startSymbols.includes(char)) depth++;
-    if(Brackets.endSymbols.includes(char)) depth--;
+    if(Brackets.openSymbols.includes(char)) depth++;
+    if(Brackets.closeSymbols.includes(char)) depth--;
     if(depth === 0) yield stack.get();
   }
   if(stack.remain()) yield stack.get();
