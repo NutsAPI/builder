@@ -13,7 +13,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   /**
    * Simple object literals
    * 
-   * ex. { username: string } => rt.Record({ username: rt.String })
+   * ex. { username: string } => zod.object({ username: zod.string() })
    */
   const objectLiteral = Brackets.extract(type, Brackets.objectBracket);
   if(objectLiteral.match) {
@@ -80,7 +80,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
   }
 
   /**
-   * ex. Record<A, B> => rt.Record(A, B)
+   * ex. Record<A, B> => zod.record(A, B)
    */
   const recordLiteral = Brackets.extract(type, { open: 'Record<', close: '>' });
   if(recordLiteral.match) {
@@ -133,19 +133,19 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
 
   /**
    * Processes string literals.
-   * ex. "abc" => rt.Literal("abc")
+   * ex. "abc" => zod.literal("abc")
    */
   if(isStringLiteral(type)) return `zod.literal(${type})`;
 
   /**
    * Processes number literals.
-   * ex. 123 => rt.Literal(123)
+   * ex. 123 => zod.literal(123)
    */
   if(!isNaN(parseInt(type))) return `zod.literal(${type})`;
 
   /**
    * Processes arrays.
-   * ex. A[] => rt.Array(A)
+   * ex. A[] => A.array()
    */
   const arrayLiteral = Brackets.extract(type, { open: '', close: '[]' });
   if(arrayLiteral.match) return `${await recursive(arrayLiteral.content)}.array()`;  
