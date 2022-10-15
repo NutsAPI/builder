@@ -31,7 +31,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
         value: recursive(v.value),
       }))
       .map(async v => `${v.key}:${await v.value}`);
-    return `rt.Record({${await promiseJoin(typed, ',')})`;
+    return `rt.Record({${await promiseJoin(typed, ',')}})`;
   }
   
   /**
