@@ -7,9 +7,9 @@ it('getUsers(mock)', async () => {
     response: [
       {
         returnCode: 200,
-        type: 'zod.object({user:zod.object({username:zod.string(),email:zod.string()}),empty:zod.object(zod.string(),zod.never())})',
+        type: 'zod.object({user:zod.object({username:zod.string(),email:zod.string()}),empty:zod.record(zod.string(),zod.never())})',
       },
-      { returnCode: 404, type: 'zod.object(zod.string(),zod.never())' },
+      { returnCode: 404, type: 'zod.record(zod.string(),zod.never())' },
     ],
   });
 });
@@ -20,7 +20,7 @@ it('deleteUsers(mock)', async () => {
     response: [
       {
         returnCode: 200,
-        type: 'zod.object(zod.string(),zod.never())',
+        type: 'zod.record(zod.string(),zod.never())',
       },
       { returnCode: 503, type: 'zod.object({reason:zod.literal(\'a\').or(zod.literal(\'b\')).or(zod.literal(\'c\'))})' },
     ],
