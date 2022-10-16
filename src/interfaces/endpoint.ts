@@ -12,5 +12,5 @@ export interface EndpointTypes {
 
 export interface EndpointFiles {
   uri: string,
-  files: { method: HttpRequestMethod, filePath: string },
+  files: { method: HttpRequestMethod, filePath: string }[],
 }

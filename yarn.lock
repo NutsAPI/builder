@@ -640,9 +640,9 @@
     "@typescript-eslint/parser" "^5.38.1"
 
 "@nutsapi/types@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@nutsapi/types/-/types-1.0.2.tgz#3be7ae8f864e64f464381280bf6e26fa39105af8"
-  integrity sha512-B/XWczhRPwt5Oa99XeiGWSbZD8HKoD1jaoOMG/FYV112HMj/aTwoWsRCwRO0/adFLh1+HpxZK+XylBo2k85a4Q==
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@nutsapi/types/-/types-1.0.3.tgz#3cc92ad7d11ecd99b60ed092a76e0b7cc70320b8"
+  integrity sha512-LIDuvUWGsAeBc2CpfMiGJzSs8xQhdDDrgPmnyr105qWyB5Vl9/cYXCXjbs73EYp3HdAhqR9VtQvhx52nNEnz+A==
 
 "@sinclair/typebox@^0.24.1":
   version "0.24.44"
