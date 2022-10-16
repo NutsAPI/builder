@@ -639,6 +639,11 @@
     "@typescript-eslint/eslint-plugin" "^5.38.1"
     "@typescript-eslint/parser" "^5.38.1"
 
+"@nutsapi/types@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@nutsapi/types/-/types-1.0.2.tgz#3be7ae8f864e64f464381280bf6e26fa39105af8"
+  integrity sha512-B/XWczhRPwt5Oa99XeiGWSbZD8HKoD1jaoOMG/FYV112HMj/aTwoWsRCwRO0/adFLh1+HpxZK+XylBo2k85a4Q==
+
 "@sinclair/typebox@^0.24.1":
   version "0.24.44"
   resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.24.44.tgz#0a0aa3bf4a155a678418527342a3ee84bd8caa5c"
