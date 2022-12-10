@@ -9,7 +9,7 @@
     "paths": {
       "@src/*": ["src/*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
   },
   "include": ["./src/**/*", "./test/**/*"],
   "exclude": ["node_modules"],
