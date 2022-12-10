@@ -6,7 +6,9 @@ import { parseInterface } from './parseInterface';
 import { parseType } from './typeparser';
 import { join } from 'path';
 
-export async function parseEndpoint(path: string): Promise<EndpointTypes> {
+export interface CustomPath { ailas: RegExp, route: string }
+
+export async function parseEndpoint(path: string, customPaths: CustomPath[]): Promise<EndpointTypes> {
   const data = (await readFile(path)).toString();
   const interfaces = parseInterface(data);
 
@@ -26,7 +28,7 @@ export async function parseEndpoint(path: string): Promise<EndpointTypes> {
 
   const provider: FileProvider = async file => {
     if(file === '') return data;
-    return await readFile(join(path, '../', file))
+    return await readFile(join(path, '../', customPaths.reduce((a, b) => a.replace(b.ailas, b.route), file)))
       .then(v => v.toString())
       .catch(() => undefined);
   };
