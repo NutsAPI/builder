@@ -4,9 +4,11 @@ import { RequestTypeNotFoundError, ResponseTypeNotFoundError } from './error/inv
 import type { EndpointTypes } from './interfaces/endpoint';
 import { parseInterface } from './parseInterface';
 import { parseType } from './typeparser';
-import { join } from 'path';
+import { resolve } from 'path';
 
-export async function parseEndpoint(path: string): Promise<EndpointTypes> {
+export type CustomPath = (v: string) => string;
+
+export async function parseEndpoint(path: string, customPaths: CustomPath[]): Promise<EndpointTypes> {
   const data = (await readFile(path)).toString();
   const interfaces = parseInterface(data);
 
@@ -26,7 +28,7 @@ export async function parseEndpoint(path: string): Promise<EndpointTypes> {
 
   const provider: FileProvider = async file => {
     if(file === '') return data;
-    return await readFile(join(path, '../', file))
+    return await readFile(resolve(path, '../', customPaths.reduce((a, b) => b(a), file)))
       .then(v => v.toString())
       .catch(() => undefined);
   };
