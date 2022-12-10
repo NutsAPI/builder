@@ -1,6 +1,5 @@
 import type { HttpRequestMethod } from '@nutsapi/types';
 import { HTTP_REQUEST_METHODS } from '@nutsapi/types';
-import { Dirent } from 'fs';
 import { readdir } from 'fs/promises';
 import { join } from 'path';
 import type { EndpointFiles } from './interfaces/endpoint';
