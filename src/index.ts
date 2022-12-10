@@ -32,6 +32,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
   );
 
   return [
+    'import { z as zod } from \'zod\'',
     `const apiSchema = {${
       types.map(v => `'${v.uri}':{${
         v.methods.map(e => `'${e.method}':{request:${e.type.request.type},response:{${e.type.response.map(v => `${v.returnCode}: ${v.type}`).join(',')}}}`).join(',')
