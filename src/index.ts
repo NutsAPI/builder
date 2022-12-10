@@ -1,4 +1,5 @@
 import { exploreEndpoint } from './exploreEndpoints';
+import type { CustomPath} from './parseEndpoint';
 import { parseEndpoint } from './parseEndpoint';
 
 interface BuilderOptions {
@@ -8,6 +9,9 @@ interface BuilderOptions {
 
   /**URI of the HTTP server to which the root of the schema corresponds (default: '/') */
   uriRoot?: `/${string}/` | '/';
+
+  /**If you are using paths in tsconfig.json and the paths are not resolved correctly, you can use this to make changes. */
+  customPaths?: CustomPath[]
 }
 
 export async function buildNutsAPISchema(options: BuilderOptions): Promise<string> {
@@ -15,6 +19,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
     ...options,
     ...{
       uriRoot: '/',
+      customPaths: [],
     },
   };
 
@@ -25,7 +30,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
         methods: await Promise.all(
           v.files.map(async e => ({
             method: e.method,
-            type: await parseEndpoint(e.filePath),
+            type: await parseEndpoint(e.filePath, optionsWithDefaults.customPaths),
           })),
         ),
       })),
