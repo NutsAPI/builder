@@ -18,11 +18,11 @@ interface BuilderOptions {
 
 export async function buildNutsAPISchema(options: BuilderOptions): Promise<string> {
   const optionsWithDefaults: Required<BuilderOptions> = {
-    ...options,
     ...{
       uriRoot: '/',
       customPaths: [],
     },
+    ...options,
   };
 
   const types = await Promise.all(
