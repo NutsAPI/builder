@@ -2,6 +2,8 @@ import { exploreEndpoint } from './exploreEndpoints';
 import type { CustomPath} from './parseEndpoint';
 import { parseEndpoint } from './parseEndpoint';
 
+export { atSignAilas } from '@src/util';
+
 interface BuilderOptions {
 
   /**The path to the root of the directory where the .ts files of schema are stored. */
@@ -47,3 +49,4 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
   ].join('\n');
   
 }
+
