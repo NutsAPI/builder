@@ -7,8 +7,9 @@ it('all', async () => {
       schemaRoot: resolve('./test/mocks/parseEndpoint'),
     },
   )).toBe([
-    'import { z as zod } from \'zod\'',
-    'const apiSchema = {\'/deleteUsers\':{\'POST\':{request:zod.object({_id:zod.string()}),response:{200: zod.record(zod.string(),zod.never()),503: zod.object({reason:zod.literal(\'a\').or(zod.literal(\'b\')).or(zod.literal(\'c\'))})}}},\'/getUsers\':{\'POST\':{request:zod.object({_id:zod.string()}),response:{200: zod.object({user:zod.object({username:zod.string(),email:zod.string()}),empty:zod.record(zod.string(),zod.never())}),404: zod.record(zod.string(),zod.never())}}}} as const;',
-    'type ApiSchemaType = typeof apiSchema;',
+    'import { z as zod } from \'zod\';',
+    'export const apiSchema = {\'/deleteUsers\':{\'POST\':{request:zod.object({_id:zod.string()}),response:{200: zod.record(zod.string(),zod.never()),503: zod.object({reason:zod.literal(\'a\').or(zod.literal(\'b\')).or(zod.literal(\'c\'))})}}},\'/getUsers\':{\'POST\':{request:zod.object({_id:zod.string()}),response:{200: zod.object({user:zod.object({username:zod.string(),email:zod.string()}),empty:zod.record(zod.string(),zod.never())}),404: zod.record(zod.string(),zod.never())}}}} as const;',
+    'export type ApiSchemaType = typeof apiSchema;',
+    '',
   ].join('\n'));
 });

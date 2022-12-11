@@ -46,6 +46,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
       }}`).join(',')
     }} as const;`,
     'export type ApiSchemaType = typeof apiSchema;',
+    '',
   ].join('\n');
   
 }
