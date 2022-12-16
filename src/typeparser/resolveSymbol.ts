@@ -1,22 +1,23 @@
 import { join } from 'path';
 import { parseInterface } from '../parseInterface';
 import { isStringLiteral, removeBothEndsSpace } from './util';
+import type { TypeParserConfig } from '.';
 
 export type FileProvider = (filePath: string) => Promise<string | undefined>;
 
-export async function resolveSymbol(name: string, provider: FileProvider): Promise<{ type: string, provider: FileProvider } | null> {
-  const data = await provider('');
+export async function resolveSymbol(name: string, config: TypeParserConfig): Promise<{ type: string, provider: FileProvider } | null> {
+  const data = await config.provider('');
   if(data === undefined) return null;
   const inFileDatas = parseInterface(data);
   const inFileSymbol = inFileDatas.find(v => v.name === name);
-  if(inFileSymbol !== undefined) return { type: inFileSymbol.value, provider };
+  if(inFileSymbol !== undefined) return { type: inFileSymbol.value, provider: config.provider };
 
   const imports = parseImport(data);
   const target = imports.find(v => v.types.includes(name));
   if(target === undefined) return null;
   const files = await Promise.all(resolveFileName(target.path).map(async v => ({
     path: v,
-    data: await provider(v),
+    data: await config.provider(v),
   })));
   const external = files.find((v): v is { data: string, path: string } => v.data !== undefined);
   if(external === undefined) return null;
@@ -24,7 +25,7 @@ export async function resolveSymbol(name: string, provider: FileProvider): Promi
   const externalSymbol = externalDatas.find(v => v.name === name);
   if(externalSymbol !== undefined) return {
     type: externalSymbol.value,
-    provider: async (path) => path === '' ? external.data : provider(join(external.path, '../', path)),
+    provider: async (path) => path === '' ? external.data : config.provider(join(external.path, '../', path)),
   };
 
   return null;
