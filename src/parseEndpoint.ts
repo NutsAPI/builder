@@ -35,12 +35,12 @@ export async function parseEndpoint(path: string, customPaths: CustomPath[]): Pr
 
   return {
     request: {
-      type: await parseType(request.value, provider),
+      type: await parseType(request.value, { provider }),
     },
     response: await Promise.all(
       responses.map(async r => ({
         returnCode: r.returnCode,
-        type: await parseType(r.value, provider),
+        type: await parseType(r.value, { provider }),
       })),
     ),
   };
