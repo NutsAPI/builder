@@ -1,4 +1,4 @@
-import type { FileProvider } from './typeparser/resolveSymbol';
+import type { CustomResolver, FileProvider } from './typeparser/resolveSymbol';
 import { readFile } from 'fs/promises';
 import { RequestTypeNotFoundError, ResponseTypeNotFoundError } from './error/invaildEndpoint';
 import type { EndpointTypes } from './interfaces/endpoint';
@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 export type CustomPath = (v: string) => string;
 
-export async function parseEndpoint(path: string, customPaths: CustomPath[]): Promise<EndpointTypes> {
+export async function parseEndpoint(path: string, customPaths: CustomPath[], customResolvers: CustomResolver[]): Promise<EndpointTypes> {
   const data = (await readFile(path)).toString();
   const interfaces = parseInterface(data);
 
@@ -35,12 +35,12 @@ export async function parseEndpoint(path: string, customPaths: CustomPath[]): Pr
 
   return {
     request: {
-      type: await parseType(request.value, { provider }),
+      type: await parseType(request.value, { provider, customResolvers }),
     },
     response: await Promise.all(
       responses.map(async r => ({
         returnCode: r.returnCode,
-        type: await parseType(r.value, { provider }),
+        type: await parseType(r.value, { provider, customResolvers }),
       })),
     ),
   };

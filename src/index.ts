@@ -1,6 +1,7 @@
 import { exploreEndpoint } from './exploreEndpoints';
 import type { CustomPath} from './parseEndpoint';
 import { parseEndpoint } from './parseEndpoint';
+import type { CustomResolver } from './typeparser/resolveSymbol';
 
 export { atSignAilas } from '@src/util';
 
@@ -13,7 +14,10 @@ interface BuilderOptions {
   uriRoot?: `/${string}/` | '/';
 
   /**If you are using paths in tsconfig.json and the paths are not resolved correctly, you can use this to make changes. */
-  customPaths?: CustomPath[]
+  customPaths?: CustomPath[],
+
+  /**Used in conjunction with the NutsAPI Converter model. */
+  customResolver?: CustomResolver[],
 }
 
 export async function buildNutsAPISchema(options: BuilderOptions): Promise<string> {
@@ -21,6 +25,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
     ...{
       uriRoot: '/',
       customPaths: [],
+      customResolver: [],
     },
     ...options,
   };
@@ -32,7 +37,7 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
         methods: await Promise.all(
           v.files.map(async e => ({
             method: e.method,
-            type: await parseEndpoint(e.filePath, optionsWithDefaults.customPaths),
+            type: await parseEndpoint(e.filePath, optionsWithDefaults.customPaths, optionsWithDefaults.customResolver),
           })),
         ),
       })),

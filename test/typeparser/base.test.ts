@@ -55,7 +55,7 @@ export interface ExternalInterfaceMarto {
 }
 `;
 
-export const p: TypeParserConfig = { provider: async p => p === './a.ts' ? external : p === '' ? original : undefined };
+export const p: TypeParserConfig = { customResolvers: [], provider: async p => p === './a.ts' ? external : p === '' ? original : undefined };
 
 const parse = parseInterface(original);
 const i = (name: string) => parse.find(v => v.name === name)?.value ?? '';

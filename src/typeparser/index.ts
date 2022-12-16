@@ -1,10 +1,11 @@
 import { isStringLiteral, leftEval, promiseJoin, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
 import { Brackets } from './brackets';
-import type { FileProvider } from './resolveSymbol';
+import type { CustomResolver, FileProvider } from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
 export interface TypeParserConfig {
   provider: FileProvider,
+  customResolvers: CustomResolver[],
 }
 
 export async function parseType(type: string, config: TypeParserConfig): Promise<string> {
