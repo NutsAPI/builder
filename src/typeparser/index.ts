@@ -1,14 +1,19 @@
 import { isStringLiteral, leftEval, promiseJoin, removeBothEndsSpace, splitTopmost } from '@src/typeparser/util';
 import { Brackets } from './brackets';
-import type { FileProvider } from './resolveSymbol';
+import type { CustomResolver, FileProvider } from './resolveSymbol';
 import { resolveSymbol } from './resolveSymbol';
 
-export async function parseType(type: string, provider: FileProvider): Promise<string> {
+export interface TypeParserConfig {
+  provider: FileProvider,
+  customResolvers: CustomResolver[],
+}
 
-  const recursive = (nextType: string, nextProvider?: FileProvider) => parseType(nextType, nextProvider ?? provider);
+export async function parseType(type: string, config: TypeParserConfig): Promise<string> {
+
+  const recursive = (nextType: string, nextConfig?: TypeParserConfig) => parseType(nextType, nextConfig ?? config);
 
   const spaceRemoved = removeBothEndsSpace(type);
-  if(type !== spaceRemoved) return recursive(spaceRemoved, provider);
+  if(type !== spaceRemoved) return recursive(spaceRemoved, config);
 
   /**
    * Simple object literals
@@ -51,8 +56,8 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
       provider: FileProvider;
     } | undefined = await (async () => {
       const objectLiteral = refMatch[1].match(/\{(.*)\}/s)?.[1];
-      if(objectLiteral !== undefined) return { record: objectLiteral, provider };
-      const symbol = await resolveSymbol(refMatch[1], provider);
+      if(objectLiteral !== undefined) return { record: objectLiteral, provider: config.provider };
+      const symbol = await resolveSymbol(refMatch[1], config);
       if(symbol === null) return undefined;
       const symbolContent = symbol.type.match(/\{(.*)\}/s)?.[1];
       if(symbolContent !== undefined) return { record: symbolContent, provider: symbol.provider };
@@ -76,7 +81,7 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
     if (data === undefined)
       throw `Record ${refMatch[1]} = ${recordSearch.record} hasn't property ${refMatch[2]}`;
 
-    return recursive(`${data.value}${refMatch[3] ?? ''}`, recordSearch.provider);
+    return recursive(`${data.value}${refMatch[3] ?? ''}`, {  ...config, provider: recordSearch.provider });
   }
 
   /**
@@ -155,9 +160,9 @@ export async function parseType(type: string, provider: FileProvider): Promise<s
    * If none of the above can be found, refer to an external file to see if it has been written.
    * If an external file is referenced, the file being looked at changes, so update `provider`.
    */
-  const symbol = await resolveSymbol(type, provider);
+  const symbol = await resolveSymbol(type, config);
   if(symbol !== null)
-    return await recursive(symbol.type, symbol.provider);
+    return await recursive(symbol.type, { ...config, provider: symbol.provider });
 
   throw `Unknown Type: ${type}`;
 }

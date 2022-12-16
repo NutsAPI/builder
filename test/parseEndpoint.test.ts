@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { parseEndpoint } from '@src/parseEndpoint';
 
 it('getUsers(mock)', async () => {
-  expect(await parseEndpoint(resolve('./test/mocks/parseEndpoint/getUsers.post.ts'), [])).toStrictEqual({
+  expect(await parseEndpoint(resolve('./test/mocks/parseEndpoint/getUsers.post.ts'), [], [])).toStrictEqual({
     request: { type: 'zod.object({_id:zod.string()})' },
     response: [
       {
@@ -15,7 +15,7 @@ it('getUsers(mock)', async () => {
 });
 
 it('deleteUsers(mock)', async () => {
-  expect(await parseEndpoint(resolve('./test/mocks/parseEndpoint/deleteUsers.post.ts'), [])).toStrictEqual({
+  expect(await parseEndpoint(resolve('./test/mocks/parseEndpoint/deleteUsers.post.ts'), [], [])).toStrictEqual({
     request: { type: 'zod.object({_id:zod.string()})' },
     response: [
       {

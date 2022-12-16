@@ -1,6 +1,6 @@
 import { parseInterface } from '@src/parseInterface';
+import type { TypeParserConfig} from '@src/typeparser';
 import { parseType } from '@src/typeparser';
-import type { FileProvider } from '@src/typeparser/resolveSymbol';
 
 const original = `
 import type { ExternalInterfaceMarto } from './a'; 
@@ -55,7 +55,7 @@ export interface ExternalInterfaceMarto {
 }
 `;
 
-export const p: FileProvider = async p => p === './a.ts' ? external : p === '' ? original : undefined;
+export const p: TypeParserConfig = { customResolvers: [], provider: async p => p === './a.ts' ? external : p === '' ? original : undefined };
 
 const parse = parseInterface(original);
 const i = (name: string) => parse.find(v => v.name === name)?.value ?? '';
