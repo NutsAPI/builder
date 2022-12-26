@@ -16,6 +16,33 @@ export async function parseType(type: string, config: TypeParserConfig): Promise
   if(type !== spaceRemoved) return recursive(spaceRemoved, config);
 
   /**
+   * Place brackets in the order in which they are to be evaluated.
+   * ex. A & B | C => (((A) & B) | C)
+   */
+  const evalResult = leftEval(type);
+  if(evalResult.evalable) return recursive(evalResult.result);
+
+  /**
+   * Processes Operators(Union, Intersect).
+   */
+  const union = splitTopmost(type, '|');
+  if(union.length === 2)
+    return `${await recursive(union[0])}.or(${await recursive(union[1])})`;
+  
+  const intersect = splitTopmost(type, '&');
+  if(intersect.length === 2)
+    return `${await recursive(intersect[0])}.and(${await recursive(intersect[1])})`;
+
+  
+  /**
+   * Remove meaningless brackets.
+   * ex. (A) => A
+   */
+  const bracketedType =  Brackets.extract(type, Brackets.parenthesisBracket);
+  if(bracketedType.match) return recursive(bracketedType.content);
+
+
+  /**
    * Simple object literals
    * 
    * ex. { username: string } => zod.object({ username: zod.string() })
@@ -94,34 +121,6 @@ export async function parseType(type: string, config: TypeParserConfig): Promise
       throw '';
     return `zod.record(${await promiseJoin(args.map(t => recursive(t)), ',')})`;
   }
-
-
-  /**
-   * Place brackets in the order in which they are to be evaluated.
-   * ex. A & B | C => (((A) & B) | C)
-   */
-  const evalResult = leftEval(type);
-  if(evalResult.evalable) return recursive(evalResult.result);
-
-
-  /**
-   * Processes Operators(Union, Intersect).
-   */
-  const union = splitTopmost(type, '|');
-  if(union.length === 2)
-    return `${await recursive(union[0])}.or(${await recursive(union[1])})`;
-
-  const intersect = splitTopmost(type, '&');
-  if(intersect.length === 2)
-    return `${await recursive(intersect[0])}.and(${await recursive(intersect[1])})`;
-
-
-  /**
-   * Remove meaningless brackets.
-   * ex. (A) => A
-   */
-  const bracketedType =  Brackets.extract(type, Brackets.parenthesisBracket);
-  if(bracketedType.match) return recursive(bracketedType.content);
 
 
   /**
