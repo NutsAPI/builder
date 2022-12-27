@@ -39,6 +39,10 @@ export interface RefTest {
   }['b']['c'];
 }
 
+export type WithBraceUnion = ({ x: 'a' }) | ({ y: 'b' });
+export type NoBraceUnion = { x: 'a' } | { y: 'b' };
+export type Optional = { x?: string };
+
 export type RecordTest = Record<string, never>;
 
 export type ResolveTest1 = Marto['a']['b'];
@@ -108,6 +112,25 @@ test('parseRefTest', async () => {
     'zod.object({a:zod.boolean()})',
   );
 });
+
+test('parseNoBraceUnion', async () => {
+  expect(await parseType(i('NoBraceUnion'), p)).toBe(
+    'zod.object({x:zod.literal(\'a\')}).or(zod.object({y:zod.literal(\'b\')}))',
+  );
+});
+
+test('parseWithBraceUnion', async () => {
+  expect(await parseType(i('WithBraceUnion'), p)).toBe(
+    'zod.object({x:zod.literal(\'a\')}).or(zod.object({y:zod.literal(\'b\')}))',
+  );
+});
+
+test('parseOptional', async () => {
+  expect(await parseType(i('Optional'), p)).toBe(
+    'zod.object({x:zod.string().optional()})',
+  );
+});
+
 
 test('parseRecordTest', async () => {
   expect(await parseType(i('RecordTest'), p)).toBe(
