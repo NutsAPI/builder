@@ -3,7 +3,7 @@ import { parseInterface } from '../parseInterface';
 import { isStringLiteral, removeBothEndsSpace } from './util';
 import type { TypeParserConfig } from '.';
 
-export type FileProvider = (filePath: string) => Promise<string | undefined>;
+export type FileProvider = (filePath: string) => Promise<{ data: string, path: string } | undefined>;
 export type CustomResolver = (v: string) => string | null;
 
 export async function resolveSymbol(name: string, config: TypeParserConfig): Promise<{ type: string, provider: FileProvider } | null> {
@@ -11,24 +11,21 @@ export async function resolveSymbol(name: string, config: TypeParserConfig): Pro
   {
     const data = await config.provider('');
     if(data === undefined) break FileResolver;
-    const inFileDatas = parseInterface(data);
+    const inFileDatas = parseInterface(data.data);
     const inFileSymbol = inFileDatas.find(v => v.name === name);
     if(inFileSymbol !== undefined) return { type: inFileSymbol.value, provider: config.provider };
 
-    const imports = parseImport(data);
+    const imports = parseImport(data.data);
     const target = imports.find(v => v.types.includes(name));
     if(target === undefined) break FileResolver;
-    const files = await Promise.all(resolveFileName(target.path).map(async v => ({
-      path: v,
-      data: await config.provider(v),
-    })));
-    const external = files.find((v): v is { data: string, path: string } => v.data !== undefined);
+    const files = await Promise.all(resolveFileName(target.path).map(v => config.provider(v)));
+    const external = files.find((v): v is { data: string, path: string } => v?.data !== undefined);
     if(external === undefined) break FileResolver;
     const externalDatas = parseInterface(external.data);
     const externalSymbol = externalDatas.find(v => v.name === name);
     if(externalSymbol !== undefined) return {
       type: externalSymbol.value,
-      provider: async (path) => path === '' ? external.data : config.provider(join(external.path, '../', path)),
+      provider: async (path) => path === '' ? { path: external.path, data: external.data } : config.provider(join(external.path, '../', path)),
     };
   }
 
