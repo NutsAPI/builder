@@ -41,6 +41,7 @@ export interface RefTest {
 
 export type WithBraceUnion = ({ x: 'a' }) | ({ y: 'b' });
 export type NoBraceUnion = { x: 'a' } | { y: 'b' };
+export type Optional = { x?: string };
 
 export type RecordTest = Record<string, never>;
 
@@ -121,6 +122,12 @@ test('parseNoBraceUnion', async () => {
 test('parseWithBraceUnion', async () => {
   expect(await parseType(i('WithBraceUnion'), p)).toBe(
     'zod.object({x:zod.literal(\'a\')}).or(zod.object({y:zod.literal(\'b\')}))',
+  );
+});
+
+test('parseOptional', async () => {
+  expect(await parseType(i('Optional'), p)).toBe(
+    'zod.object({x:z.string().optional()})',
   );
 });
 
