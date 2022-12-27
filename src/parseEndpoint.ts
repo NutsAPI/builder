@@ -27,9 +27,11 @@ export async function parseEndpoint(path: string, customPaths: CustomPath[], cus
   }
 
   const provider: FileProvider = async file => {
-    if(file === '') return data;
-    return await readFile(resolve(path, '../', customPaths.reduce((a, b) => b(a), file)))
-      .then(v => v.toString())
+    if(file === '') return { data: data, path };
+
+    const calculatedPath = resolve(path, '../', customPaths.reduce((a, b) => b(a), file));
+    return await readFile(calculatedPath)
+      .then(v => ({ data: v.toString(), path: calculatedPath }))
       .catch(() => undefined);
   };
 
