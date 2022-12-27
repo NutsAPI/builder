@@ -58,10 +58,13 @@ export async function parseType(type: string, config: TypeParserConfig): Promise
         key: v[0],
         value: v[1],
       }))
-      .map(v => ({
-        key: v.key,
-        value: recursive(v.value),
-      }))
+      .map(v => {
+        const optional = Brackets.extract(v.key, { open: '', close: '?' });
+        return {
+          key: optional.match ? optional.content : v.key,
+          value: optional.match ? (async () => `${await recursive(v.value)}.optional()`)() : recursive(v.value),
+        };
+      })
       .map(async v => `${v.key}:${await v.value}`);
     return `zod.object({${await promiseJoin(typed, ',')}})`;
   }

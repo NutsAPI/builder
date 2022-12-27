@@ -127,7 +127,7 @@ test('parseWithBraceUnion', async () => {
 
 test('parseOptional', async () => {
   expect(await parseType(i('Optional'), p)).toBe(
-    'zod.object({x:z.string().optional()})',
+    'zod.object({x:zod.string().optional()})',
   );
 });
 
