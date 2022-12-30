@@ -10,7 +10,6 @@ export interface TypeParserConfig {
 
 export async function parseType(type: string, config: TypeParserConfig, logger?: (v: string) => void): Promise<string> {
   logger?.(type);
-  logger?.(typeof type);
   const recursive = (nextType: string, nextConfig?: TypeParserConfig) => parseType(nextType, nextConfig ?? config, logger);
 
   const spaceRemoved = removeBothEndsSpace(type);
