@@ -25,7 +25,8 @@ export async function resolveSymbol(name: string, config: TypeParserConfig): Pro
     const externalSymbol = externalDatas.find(v => v.name === name);
     if(externalSymbol !== undefined) return {
       type: externalSymbol.value,
-      provider: async (path) => path === '' ? { path: external.path, data: external.data } : config.provider(join(external.path, '../', path)),
+      provider: async (path) => path === '' ? { path: external.path, data: external.data } :
+        config.provider(path.startsWith('.') ? join(external.path, '../', path) : path),
     };
   }
 
