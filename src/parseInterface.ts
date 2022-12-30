@@ -78,7 +78,12 @@ export function parseInterface(s: string): { name: string, value: string }[] {
     }
     }
   }
-  return list;
+  return list.map(({ name, value }) => ({
+    name,
+    value: value.replace(/(\/)(?:\*[\s\S]*?\*\/|\/.*)|"(?:\\[\s\S]|[^\\\n"])*"|'(?:\\[\s\S]|[^\\\n'])*'|<!\[CDATA\[[\s\S]*?\]\]>|\/(?:\\.|\[(?:\\.|[^\n\]])*\]|[^\n/])+\/\w*/g, function($0, $1) {
+      return $1 ? '' : $0;
+    }),
+  }));
 }
 
 export function checkBackwards(target: string, index: number, looking: string) {
