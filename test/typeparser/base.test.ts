@@ -18,10 +18,18 @@ export interface POSTResponse {
 };
 
 export interface UnionOuter {
+
+  /** This is out */
   out: (string | number)[]
+
+  /** This is in */
   in: string[] | number[]
+
+  // Split
   split: string | number[]
 }
+
+// Test Comment
 
 export type Cross = string | number & boolean;
 export type Cross2 = string & number | boolean;
