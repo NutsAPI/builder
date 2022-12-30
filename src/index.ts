@@ -45,11 +45,21 @@ export async function buildNutsAPISchema(options: BuilderOptions): Promise<strin
 
   return [
     'import { z as zod } from \'zod\';',
-    `export const apiSchema = {${
-      types.map(v => `'${v.uri}':{${
-        v.methods.map(e => `'${e.method}':{request:${e.type.request.type},response:{${e.type.response.map(v => `${v.returnCode}: ${v.type}`).join(',')}}}`).join(',')
-      }}`).join(',')
-    }} as const;`,
+    'export const apiSchema = {',
+    types.flatMap(v => [ 
+      `'${v.uri}': {`,
+      ...v.methods
+        .flatMap(e => [
+          `  '${e.method}': {`,
+          `    request: ${e.type.request.type},`,
+          '    response: {',
+          ...e.type.response.flatMap(r => `      ${r.returnCode}: ${r.type},`),
+          '    },',
+          '  },',
+        ]),
+      '},',
+    ]).map(v => `  ${v}`).join('\n'),
+    '} as const;',
     'export type ApiSchemaType = typeof apiSchema;',
     '',
   ].join('\n');
