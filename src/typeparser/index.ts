@@ -8,9 +8,10 @@ export interface TypeParserConfig {
   customResolvers: CustomResolver[],
 }
 
-export async function parseType(type: string, config: TypeParserConfig): Promise<string> {
-
-  const recursive = (nextType: string, nextConfig?: TypeParserConfig) => parseType(nextType, nextConfig ?? config);
+export async function parseType(type: string, config: TypeParserConfig, logger?: (v: string) => void): Promise<string> {
+  logger?.(type);
+  logger?.(typeof type);
+  const recursive = (nextType: string, nextConfig?: TypeParserConfig) => parseType(nextType, nextConfig ?? config, logger);
 
   const spaceRemoved = removeBothEndsSpace(type);
   if(type !== spaceRemoved) return recursive(spaceRemoved, config);
@@ -54,6 +55,12 @@ export async function parseType(type: string, config: TypeParserConfig): Promise
       .filter(v => v !== '')
       .map(v => splitTopmost(v, ':'))
       .map(v => v.map(e => removeBothEndsSpace(e)))
+      .map(v => {
+        if(v[0] === undefined || v[1] === undefined) {
+          throw `Object ${v.join(':')} is maybe undefined!`;
+        }
+        return v;
+      })
       .map(v => ({
         key: v[0],
         value: v[1],
